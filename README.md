@@ -19,8 +19,12 @@
 
 ## Запуск
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir .
 ```
+
+> Если возникает ошибка `ModuleNotFoundError: No module named 'app'`, убедитесь, что команда запускается из корня
+> репозитория или добавьте путь к проекту в `PYTHONPATH`, например: `PYTHONPATH=. uvicorn app.main:app --host 0.0.0.0
+> --port 8000 --app-dir .`.
 
 После запуска форма доступна на `http://localhost:8000/`, а QR-страницы — по `http://localhost:8000/qr/<id>`.
 
