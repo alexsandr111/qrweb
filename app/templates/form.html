@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генерация платёжного QR</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header>
+    <h1>QR для возврата средств</h1>
+    <p>Получатель фиксирован: ООО "ЭНЕРДЖИ МЕНЕДЖМЕНТ"</p>
+  </header>
+  <main>
+    <div class="card">
+      {% if errors %}
+      <div class="errors">
+        {% for err in errors %}
+        <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <form action="/" method="post" novalidate>
+        <div>
+          <label for="payer_name">ФИО плательщика</label>
+          <input id="payer_name" type="text" name="payer_name" maxlength="150" required value="{{ values.get('payer_name', '') }}" placeholder="Иванов Иван Иванович">
+          <div class="helper">До 150 символов, кириллица поддерживается</div>
+        </div>
+        <div>
+          <label for="amount">Сумма (рубли)</label>
+          <input id="amount" type="text" name="amount" inputmode="decimal" pattern="\d+[\.,]?\d*" required value="{{ values.get('amount', '') }}" placeholder="5000.75">
+          <div class="helper">Можно вводить копейки через точку или запятую</div>
+        </div>
+        <div>
+          <button type="submit">Создать QR</button>
+        </div>
+      </form>
+      <footer>Данные сохраняются локально в SQLite (payments.db)</footer>
+    </div>
+  </main>
+</body>
+</html>
