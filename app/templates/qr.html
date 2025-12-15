@@ -22,6 +22,7 @@
         <div class="meta">
           <div><strong>ФИО:</strong> {{ payment['payer_name'] }}</div>
           <div><strong>Сумма:</strong> {{ '%.2f' % payment['amount_rub'] }} ₽</div>
+          <div><strong>Назначение:</strong> {{ payment['purpose'] or 'Возврат неиспользованного аванса' }}</div>
           <div><strong>Реквизиты получателя:</strong><br>ООО "ЭНЕРДЖИ МЕНЕДЖМЕНТ" · {{ payment['created_at'] }}</div>
           <div class="actions">
             <button type="button" onclick="downloadQR()">Скачать QR (PNG)</button>

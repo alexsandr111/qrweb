@@ -8,8 +8,13 @@
 </head>
 <body>
   <header>
-    <h1>QR для возврата средств</h1>
-    <p>Получатель фиксирован: ООО "ЭНЕРДЖИ МЕНЕДЖМЕНТ"</p>
+    <h1>QR для формирования платёжного поручения в банковских приложениях</h1>
+    <div class="requisites">
+      <div><strong>Получатель:</strong> ООО "ЭНЕРДЖИ МЕНЕДЖМЕНТ"</div>
+      <div><strong>ИНН:</strong> 9709082458</div>
+      <div><strong>Расчётный счёт:</strong> 40702810900000057455</div>
+      <div><strong>Банк:</strong> ГПБ (АО) г. Москва</div>
+    </div>
   </header>
   <main>
     <div class="card">
@@ -30,6 +35,11 @@
           <label for="amount">Сумма (рубли)</label>
           <input id="amount" type="text" name="amount" inputmode="decimal" pattern="\d+[\.,]?\d*" required value="{{ values.get('amount', '') }}" placeholder="5000.75">
           <div class="helper">Можно вводить копейки через точку или запятую</div>
+        </div>
+        <div>
+          <label for="purpose">Назначение платежа</label>
+          <textarea id="purpose" name="purpose" maxlength="255" rows="3" required>{{ values.get('purpose', 'Возврат неиспользованного аванса') }}</textarea>
+          <div class="helper">До 255 символов. Текст можно менять, значение попадёт в QR.</div>
         </div>
         <div>
           <button type="submit">Создать QR</button>
