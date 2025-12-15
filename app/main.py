@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 DB_PATH = os.environ.get("PAYMENTS_DB", "payments.db")
+DEFAULT_PURPOSE = "Возврат неиспользованного аванса"
 FIXED_REQUISITES = {
     "Name": 'ООО "ЭНЕРДЖИ МЕНЕДЖМЕНТ"',
     "PersonalAcc": "40702810900000057455",
@@ -21,7 +22,6 @@ FIXED_REQUISITES = {
     "CorrespAcc": "30101810200000000823",
     "PayeeINN": "9709082458",
     "KPP": "770401001",
-    "Purpose": "Возврат",
 }
 
 app = FastAPI(title="Payment QR Generator")
@@ -51,10 +51,20 @@ def initialize_db():
             amount_rub REAL,
             amount_kopecks INTEGER,
             created_at DATETIME,
-            qr_string TEXT NOT NULL
+            qr_string TEXT NOT NULL,
+            purpose TEXT NOT NULL DEFAULT 'Возврат неиспользованного аванса'
         )
         """
     )
+    columns = {
+        row[1]: row[2]
+        for row in conn.execute("PRAGMA table_info(payments)").fetchall()
+    }
+    if "purpose" not in columns:
+        conn.execute(
+            "ALTER TABLE payments ADD COLUMN purpose TEXT NOT NULL DEFAULT ?",
+            (DEFAULT_PURPOSE,),
+        )
     conn.commit()
     conn.close()
 
@@ -86,26 +96,29 @@ def sanitize_amount(amount_str: str) -> tuple[Decimal, int]:
     return amount, kopecks
 
 
-def build_qr_string(payer_name: str, amount_kopecks: int) -> str:
+def build_qr_string(payer_name: str, amount_kopecks: int, purpose: str) -> str:
     parts = ["ST00011"]
     for key, value in FIXED_REQUISITES.items():
         parts.append(f"{key}={value}")
+    parts.append(f"Purpose={purpose}")
     parts.append(f"LastName={payer_name}")
     parts.append(f"SUM={amount_kopecks}")
     return "|".join(parts)
 
 
-def insert_payment(payer_name: str, amount_rub: Decimal, amount_kopecks: int) -> str:
+def insert_payment(
+    payer_name: str, amount_rub: Decimal, amount_kopecks: int, purpose: str
+) -> str:
     conn = get_connection()
     try:
         payment_id = generate_id()
         while conn.execute("SELECT 1 FROM payments WHERE id = ?", (payment_id,)).fetchone():
             payment_id = generate_id()
-        qr_string = build_qr_string(payer_name, amount_kopecks)
+        qr_string = build_qr_string(payer_name, amount_kopecks, purpose)
         conn.execute(
             """
-            INSERT INTO payments (id, payer_name, amount_rub, amount_kopecks, created_at, qr_string)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO payments (id, payer_name, amount_rub, amount_kopecks, created_at, qr_string, purpose)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 payment_id,
@@ -114,6 +127,7 @@ def insert_payment(payer_name: str, amount_rub: Decimal, amount_kopecks: int) ->
                 amount_kopecks,
                 datetime.utcnow().isoformat(timespec="seconds"),
                 qr_string,
+                purpose,
             ),
         )
         conn.commit()
@@ -123,14 +137,25 @@ def insert_payment(payer_name: str, amount_rub: Decimal, amount_kopecks: int) ->
 
 
 @app.post("/")
-async def create_payment(request: Request, payer_name: str = Form(""), amount: str = Form("")):
+async def create_payment(
+    request: Request,
+    payer_name: str = Form(""),
+    amount: str = Form(""),
+    purpose: str = Form(DEFAULT_PURPOSE),
+):
     errors = []
-    values = {"payer_name": payer_name, "amount": amount}
+    values = {"payer_name": payer_name, "amount": amount, "purpose": purpose}
 
     if not payer_name.strip():
         errors.append("ФИО плательщика обязательно")
     elif len(payer_name) > 150:
         errors.append("ФИО слишком длинное (до 150 символов)")
+
+    cleaned_purpose = purpose.strip()
+    if not cleaned_purpose:
+        errors.append("Укажите назначение платежа")
+    elif len(cleaned_purpose) > 255:
+        errors.append("Назначение платежа должно быть до 255 символов")
 
     try:
         amount_rub, amount_kopecks = sanitize_amount(amount)
@@ -143,7 +168,9 @@ async def create_payment(request: Request, payer_name: str = Form(""), amount: s
             "form.html", {"request": request, "errors": errors, "values": values}, status_code=400
         )
 
-    payment_id = insert_payment(payer_name.strip(), amount_rub, amount_kopecks)
+    payment_id = insert_payment(
+        payer_name.strip(), amount_rub, amount_kopecks, cleaned_purpose
+    )
     return RedirectResponse(url=f"/qr/{payment_id}", status_code=303)
 
 
@@ -151,8 +178,19 @@ def fetch_payment(payment_id: str):
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT id, payer_name, amount_rub, amount_kopecks, created_at, qr_string FROM payments WHERE id = ?",
-            (payment_id,),
+            """
+            SELECT
+                id,
+                payer_name,
+                amount_rub,
+                amount_kopecks,
+                created_at,
+                qr_string,
+                COALESCE(purpose, ?) as purpose
+            FROM payments
+            WHERE id = ?
+            """,
+            (DEFAULT_PURPOSE, payment_id),
         ).fetchone()
     finally:
         conn.close()
