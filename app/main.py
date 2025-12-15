@@ -61,9 +61,9 @@ def initialize_db():
         for row in conn.execute("PRAGMA table_info(payments)").fetchall()
     }
     if "purpose" not in columns:
+        default_purpose_sql = DEFAULT_PURPOSE.replace("'", "''")
         conn.execute(
-            "ALTER TABLE payments ADD COLUMN purpose TEXT NOT NULL DEFAULT ?",
-            (DEFAULT_PURPOSE,),
+            f"ALTER TABLE payments ADD COLUMN purpose TEXT NOT NULL DEFAULT '{default_purpose_sql}'"
         )
     conn.commit()
     conn.close()
