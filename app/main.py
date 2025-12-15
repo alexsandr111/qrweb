@@ -154,8 +154,8 @@ async def create_payment(
     cleaned_purpose = purpose.strip()
     if not cleaned_purpose:
         errors.append("Укажите назначение платежа")
-    elif len(cleaned_purpose) > 255:
-        errors.append("Назначение платежа должно быть до 255 символов")
+    elif len(cleaned_purpose) > 210:
+        errors.append("Назначение платежа должно быть до 210 символов")
 
     try:
         amount_rub, amount_kopecks = sanitize_amount(amount)
@@ -204,12 +204,18 @@ async def qr_page(request: Request, payment_id: str):
         raise HTTPException(status_code=404, detail="Платёж не найден")
 
     short_link = request.url_for("qr_page", payment_id=payment_id)
+    created_raw = payment["created_at"]
+    try:
+        display_created_at = datetime.fromisoformat(created_raw).date().isoformat()
+    except (TypeError, ValueError):
+        display_created_at = created_raw
     return templates.TemplateResponse(
         "qr.html",
         {
             "request": request,
             "payment": payment,
             "share_link": str(short_link),
+            "display_created_at": display_created_at,
         },
     )
 
