@@ -29,12 +29,12 @@
             <button class="secondary" type="button" onclick="copyLink()">Скопировать ссылку</button>
           </div>
           <div style="margin-top: 10px;">
-            <input id="share-link" type="text" value="{{ share_link }}" readonly style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color:#fff;">
-            <div id="copy-feedback" style="opacity:0; transition:opacity 0.3s ease; color:#a5d6a7; font-size:13px; margin-top:6px;">&nbsp;</div>
+            <input id="share-link" class="share-link" type="text" value="{{ share_link }}" readonly>
+            <div id="copy-feedback" class="copy-feedback">&nbsp;</div>
           </div>
         </div>
       </div>
-      <div class="notice">Чтобы создать новый QR, вернитесь на <a href="/" style="color:#90caf9;">главную страницу</a>.</div>
+      <div class="notice">Чтобы создать новый QR, вернитесь на <a href="/">главную страницу</a>.</div>
     </div>
   </main>
 </body>
