@@ -38,11 +38,11 @@
         </div>
         <div>
           <label for="purpose">Назначение платежа</label>
-          <textarea id="purpose" name="purpose" maxlength="210" rows="3" required>{{ values.get('purpose', 'Возврат неиспользованного аванса') }}</textarea>
-          <div class="helper">До 210 символов. Текст можно менять, значение попадёт в QR.</div>
+          <textarea id="purpose" name="purpose" maxlength="255" rows="3" required>{{ values.get('purpose', 'Возврат неиспользованного аванса') }}</textarea>
+          <div class="helper">До 255 символов. Текст можно менять, значение попадёт в QR.</div>
         </div>
         <div>
-          <button type="submit">Создать QR</button>
+          <button type="submit">Создать платёж</button>
         </div>
       </form>
       <footer>Данные сохраняются локально в SQLite (payments.db)</footer>
