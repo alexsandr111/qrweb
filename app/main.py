@@ -154,8 +154,8 @@ async def create_payment(
     cleaned_purpose = purpose.strip()
     if not cleaned_purpose:
         errors.append("Укажите назначение платежа")
-    elif len(cleaned_purpose) > 210:
-        errors.append("Назначение платежа должно быть до 210 символов")
+    elif len(cleaned_purpose) > 255:
+        errors.append("Назначение платежа должно быть до 255 символов")
 
     try:
         amount_rub, amount_kopecks = sanitize_amount(amount)
